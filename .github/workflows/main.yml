@@ -1,0 +1,51 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow when pushing to the 'main' branch
+  pull_request:
+    branches:
+      - main  # Trigger workflow when creating a pull request to the 'main' branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Send Discord notification
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{
+              "username": "GitHub Actions",
+              "avatar_url": "https://avatars.githubusercontent.com/u/9919?s=200&v=4",
+              "embeds": [
+                {
+                  "title": "Build Status Notification",
+                  "description": "The GitHub Actions workflow has completed successfully.",
+                  "color": 3447003,
+                  "fields": [
+                    {
+                      "name": "Status",
+                      "value": "Success",
+                      "inline": true
+                    }
+                  ]
+                }
+              ]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
