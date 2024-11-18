@@ -13,10 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Send Discord notification
+      - name: Send "Started" Discord notification
         run: |
           curl -X POST -H "Content-Type: application/json" \
             -d '{
@@ -24,14 +21,59 @@ jobs:
               "avatar_url": "https://avatars.githubusercontent.com/u/9919?s=200&v=4",
               "embeds": [
                 {
-                  "title": "${{ github.event.head_commit.message }}",  # Commit message as the title
-                  "description": "The GitHub Actions workflow has completed successfully.",
-                  "color": 3447003,
+                  "title": "Build Started: ${{ github.event.head_commit.message }}",  # Commit message as the title
+                  "description": "The GitHub Actions workflow has started.",
+                  "color": 16776960,  # Yellow color for "Started"
                   "fields": [
                     {
                       "name": "Status",
-                      "value": "Success",
+                      "value": "Started",
                       "inline": true
+                    },
+                    {
+                      "name": "Commit",
+                      "value": "${{ github.sha }}",
+                      "inline": true
+                    }
+                  ]
+                }
+              ]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: npm test
+
+      - name: Send "Finished" Discord notification
+        if: always()  # This ensures the notification is sent regardless of the job status
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{
+              "username": "GitHub Actions",
+              "avatar_url": "https://avatars.githubusercontent.com/u/9919?s=200&v=4",
+              "embeds": [
+                {
+                  "title": "Build Finished: ${{ github.event.head_commit.message }}",  # Commit message as the title
+                  "description": "The GitHub Actions workflow has completed.",
+                  "color": ${{ job.status == 'success' && '3066993' || '15158332' }},  # Green for success, Red for failure
+                  "fields": [
+                    {
+                      "name": "Status",
+                      "value": "${{ job.status | capitalize }}",
+                      "inline": true
+                    },
+                    {
+                      "name": "Commit",
+                      "value": "${{ github.sha }}",
+                      "inline": true
+                    },
+                    {
+                      "name": "Run URL",
+                      "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "inline": false
                     }
                   ]
                 }
