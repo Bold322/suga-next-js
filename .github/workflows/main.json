@@ -1,0 +1,48 @@
+- name: Send advanced Discord notification
+  if: always()  # This ensures the notification is sent even if the job fails
+  run: |
+    curl -X POST -H "Content-Type: application/json" \
+      -d '{
+        "username": "GitHub Actions",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9919?s=200&v=4",  # GitHub logo for the avatar
+        "embeds": [{
+          "title": "Build Status Notification",
+          "description": "The GitHub Actions workflow has completed successfully.",
+          "color": 3447003,  # Blue color for the embed (hex value)
+          "url": "https://github.com/${{ github.repository }}",  # Link to the repository
+          "thumbnail": {
+            "url": "https://raw.githubusercontent.com/github/explore/main/topics/actions/actions.png"  # Thumbnail image URL
+          },
+          "image": {
+            "url": "https://example.com/banner-image.png"  # Your banner image URL
+          },
+          "fields": [
+            {
+              "name": "Status",
+              "value": "Success",
+              "inline": true
+            },
+            {
+              "name": "Commit",
+              "value": "${{ github.sha }}",
+              "inline": true
+            },
+            {
+              "name": "Branch",
+              "value": "${{ github.ref }}",
+              "inline": true
+            },
+            {
+              "name": "Run URL",
+              "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "inline": false
+            }
+          ],
+          "footer": {
+            "text": "GitHub Actions | Workflow Notification",
+            "icon_url": "https://avatars.githubusercontent.com/u/9919?s=200&v=4"  # GitHub logo as footer icon
+          },
+          "timestamp": "${{ github.event.head_commit.timestamp }}"  # Timestamp of the commit
+        }]
+      }' \
+      ${{ secrets.DISCORD_WEBHOOK_URL }}
